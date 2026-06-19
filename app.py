@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # ⚠️ IMPORTANT: Update this with your active Colab link!
-CLOUDFLARE_API_URL = " https://core-prairie-specialized-raleigh.trycloudflare.com/v1/ask"
+CLOUDFLARE_API_URL = " https://trembl-compilation-multi-mini.trycloudflare.com/v1/ask"
 
 # UI Configuration
 st.set_page_config(page_title="Socratic Tutor", page_icon="🧠")
