@@ -1,4 +1,4 @@
-Markdown# 🧠 Aarchi's Socratic AI Tutor
+🧠 Aarchi's Socratic AI Tutor
 
 > **An adaptive, full-stack AI tutoring engine**
 > Built with FastAPI • Streamlit • Unsloth QLoRA • SQLite Stateful Memory
