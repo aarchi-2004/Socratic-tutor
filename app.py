@@ -6,7 +6,7 @@ CLOUDFLARE_API_URL = " https://core-prairie-specialized-raleigh.trycloudflare.co
 
 # UI Configuration
 st.set_page_config(page_title="Socratic Tutor", page_icon="🧠")
-st.title("🧠 Shourya's Socratic AI Tutor")
+st.title("🧠 Aarchi's Socratic AI Tutor")
 st.markdown("Ask me a coding or math question! I won't give you the answer, but I will guide you to it.")
 
 # Initialize the chat memory in Streamlit
