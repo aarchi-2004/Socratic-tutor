@@ -1,41 +1,135 @@
-# 🧠 Adaptive Socratic AI Tutor
+Markdown# 🧠 Aarchi's Socratic AI Tutor
 
-> An adaptive, full-stack AI tutoring engine that uses a custom QLoRA-aligned LLM and Socratic questioning to guide students to answers without giving them away. 
+> **An adaptive, full-stack AI tutoring engine**
+> Built with FastAPI • Streamlit • Unsloth QLoRA • SQLite Stateful Memory
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)
-![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)
+## 📋 Table of Contents
+* [Overview](#-overview)
+* [Architecture](#️-architecture)
+* [Data & State Management](#-data--state-management)
+* [Application Layers](#-application-layers)
+* [Getting Started](#-getting-started)
+* [Project Structure](#-project-structure)
+* [Key Features](#-key-features)
+* [Usage](#-usage)
+* [Educational Impact](#-educational-impact)
 
-## 📖 About The Project
+---
 
-Standard AI chatbots are designed to give users the exact answer immediately. This project takes the opposite approach. Built specifically for educational purposes, this AI acts as a **Socratic Tutor**. It analyzes the student's coding or math question and provides contextual hints designed to trigger "aha!" moments, encouraging the student to solve the problem themselves.
+## 🎯 Overview
 
-### ✨ Key Features
-* **Custom Fine-Tuned Brain:** Utilizes a lightweight LLM (Phi-3) fine-tuned with **QLoRA** (4-bit quantization) via the Unsloth library, allowing high-performance inference on a single consumer GPU.
-* **Stateful Memory:** Integrated **SQLite** database tracks user interaction metrics. 
-* **Adaptive Prompting:** The backend dynamically adjusts the system prompt based on user history. If a student asks more than 3 questions in a row, the AI automatically dials back the difficulty and provides more direct hints.
-* **Hallucination Bouncer:** Custom Python parsing logic catches and sanitizes LLM run-on sentences or broken characters before they ever reach the user.
+The Socratic AI Tutor is an end-to-end Machine Learning web application designed to guide students through complex coding and math problems. Instead of standard chatbots that simply output direct answers, this custom-aligned LLM uses Socratic methodology to provide contextual hints, triggering "aha!" moments and promoting active problem-solving.
 
-## 🏗️ Architecture & Tech Stack
+### What This Platform Does
 
-Because hosting large GPU models is expensive, this project utilizes a **Split Deployment Architecture** to run completely for free:
+`👤 User Query`  →  `⚡ FastAPI (Router)`  →  `🧠 Phi-3 (Inference)`  →  `💡 Socratic Hint`
 
-1. **The Backend (Google Colab / Cloudflare):** * A **FastAPI** server runs on a free NVIDIA T4 GPU inside Google Colab.
-   * A **Cloudflare Tunnel** exposes the local Colab server securely to the internet.
-2. **The Frontend (Streamlit Cloud):** * A sleek, responsive chat interface built with **Streamlit**.
-   * Hosted permanently on Streamlit Community Cloud.
+| Stage | Purpose | Output |
+|---|---|---|
+| **Receive** | Capture user query via Streamlit UI | JSON Payload to Backend |
+| **Process** | Retrieve user history to adapt prompt difficulty | System Prompt + Query |
+| **Generate** | Run inference via 4-bit quantized custom LLM | Raw Socratic Output |
+| **Sanitize** | Intercept and slice LLM hallucinations | Clean, single-sentence hint |
 
-## 🚀 How to Run the Project
+---
 
-### 1. Start the Backend (The Brain)
-1. Open the provided Jupyter Notebook (`.ipynb`) in Google Colab.
-2. Ensure the hardware accelerator is set to **T4 GPU**.
-3. Run all cells to install dependencies, load the SQLite database, and spin up the Unsloth model.
-4. The final cell will generate a public Cloudflare URL (e.g., `https://random-words.trycloudflare.com`). Leave this cell spinning!
+## 🏗️ Architecture
 
-### 2. Connect the Frontend (The Face)
-1. Open `app.py` in this repository.
-2. Update the `CLOUDFLARE_API_URL` variable on Line 5 with your newly generated Cloudflare link. Make sure to keep `/v1/ask` at the end!
-   ```python
-   CLOUDFLARE_API_URL = "[https://your-new-link.trycloudflare.com/v1/ask](https://your-new-link.trycloudflare.com/v1/ask)"
+### High-Level Data Flow
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           SPLIT DEPLOYMENT ARCHITECTURE                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐                 │
+│  │  FRONTEND    │     │   BACKEND    │     │   AI BRAIN   │                 │
+│  │ (Streamlit)  │────▶│  (FastAPI)   │────▶│ (Unsloth)    │                 │
+│  └──────────────┘     └──────────────┘     └──────────────┘                 │
+│         │                    │                    │                         │
+│         ▼                    ▼                    ▼                         │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐                 │
+│  │ • Chat UI    │     │ • API Routes │     │ • Phi-3 Base │                 │
+│  │ • User State │     │ • Bouncer    │     │ • LoRA Wgts  │                 │
+│  │              │     │ • DB Logic   │     │ • 4-bit GPU  │                 │
+│  └──────────────┘     └──────────────┘     └──────────────┘                 │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │      MEMORY & LOGGING         │
+                    │      (SQLite Database)        │
+                    └───────────────────────────────┘
+Technology StackComponentTechnologyPurposeComputeGoogle Colab (T4 GPU)Free-tier hardware acceleration for inferenceModelPhi-3 + QLoRALightweight, highly capable foundation LLMFrameworkUnslothRapid loading and 4-bit quantization optimizationBackendFastAPI & UvicornRESTful API generation and routingNetworkingCloudflare TunnelsSecure localhost exposure to the public webFrontendStreamlit CloudPermanent, responsive user chat interface📊 Data & State ManagementSource LocationAll interaction history is stored in a lightweight SQLite database running locally on the backend server:Plaintext/workspace/
+├── tutor_db.sqlite3        # Master state and history database
+└── socratic_lora_adapters/ # Trained weights for the AI model
+Data SchemasInteractions Table (interactions)ColumnTypeDescriptionidIntegerPrimary Key (Auto-incremented)user_idStringUnique identifier for the studentqueryTextThe specific question asked by the userhint_givenTextThe exact Socratic hint generated by the AItimestampDateTimeWhen the interaction occurred🏅 Application Layers🧠 The AI Layer (Unsloth & Phi-3)The AI layer loads the base Microsoft Phi-3 model and applies custom Low-Rank Adaptation (LoRA) weights to shift the model's behavior from a standard assistant to a Socratic educator.Key Features:✅ 4-bit quantization to fit entirely on a free 16GB GPU✅ FastLanguageModel optimization for rapid token generation✅ Custom educational alignmentPythonfrom unsloth import FastLanguageModel
+
+# Load the Aligned Socratic Model
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "socratic_lora_adapters", 
+    max_seq_length = 2048,
+    dtype = None,
+    load_in_4bit = True,
+)
+# Optimize for rapid text generation
+FastLanguageModel.for_inference(model)
+⚡ The API Layer (FastAPI + Bouncer)The backend layer handles user requests, retrieves state from SQLite to adjust the prompt difficulty, and sanitizes the AI's output to prevent run-on sentences.Key Features:✅ Adaptive Prompting (adjusts difficulty if the user struggles >3 times)✅ Hallucination Bouncer mechanism✅ Automatic database logging for metricsPython# Generate the raw response
+outputs = model.generate(**inputs, max_new_tokens=100, use_cache=True)
+response_text = tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
+
+# --- THE HALLUCINATION BOUNCER ---
+stop_words = ["Answer:", "Student:", "Here's a hint", "Here'ieves", "\n\n"]
+
+# Chop off everything after the first stop word appears
+for word in stop_words:
+    if word in response_text:
+        response_text = response_text.split(word)[0]
+
+response_text = response_text.strip()
+💻 The Frontend Layer (Streamlit)The frontend serves as the permanent face of the application, rendering a sleek chat interface that communicates securely with the Cloudflare tunnel.Pythonimport streamlit as st
+import requests
+
+st.title("🧠 Aarchi's Socratic AI Tutor")
+
+# Render previous chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Handle new user input
+if prompt := st.chat_input("Ask a coding question..."):
+    with st.spinner("Thinking..."):
+        response = requests.post(CLOUDFLARE_API_URL, json={"user_id": "Student", "query": prompt})
+        tutor_reply = response.json()["hint"]
+        
+    with st.chat_message("assistant"):
+        st.markdown(tutor_reply)
+🚀 Getting StartedPrerequisitesGoogle Colab Account (for the backend)GitHub Account (for the frontend hosting)Streamlit Community Cloud AccountQuick StartBash# 1. Clone the repository
+git clone <repository-url>
+cd socratic-tutor
+
+# 2. Run the Backend
+# Upload the provided Jupyter Notebook to Google Colab.
+# Run all cells to start the FastAPI server and generate the Cloudflare URL.
+
+# 3. Connect the Frontend
+# Open app.py and update line 5:
+CLOUDFLARE_API_URL = "https://<your-new-cloudflare-link>[.trycloudflare.com/v1/ask](https://.trycloudflare.com/v1/ask)"
+
+# 4. Deploy
+# Commit your changes to GitHub; Streamlit will auto-update.
+📁 Project StructurePlaintextsocratic-tutor/
+│
+├── src/
+│   ├── backend/                # ⚡ Server and AI Logic
+│   │   ├── socratic_lora/      #    Custom model weights
+│   │   └── backend_colab.ipynb #    Colab execution notebook
+│   │
+│   └── frontend/               # 💻 UI Application
+│       ├── app.py              #    Streamlit application script
+│       └── requirements.txt    #    UI Dependencies
+│
+└── README.md                   # 📖 This file
+✨ Key FeaturesFeatureDescription🔄 Split ArchitectureCombines free Colab GPUs with permanent Streamlit UIs🛡️ Hallucination BouncerCustom Python parsing sanitizes LLM run-on sentences instantly🎚️ Adaptive PromptingBackend counts past queries to dynamically adjust hint difficulty💾 Stateful MemorySQLite integration provides a persistent ledger of student metrics⚡ QLoRA Optimization4-bit quantization allows heavy models to run on lightweight hardware💡 UsageSample InteractionsThe Classic Debugging Test:Student: "Why does my list append() operation keep returning None in Python?"Tutor: "Hint: Consider what the append() method actually modifies, and whether it is designed to return a brand new list or simply update the existing one in place."The Logical Reasoning Test:Student: "I'm building a Retrieval-Augmented Generation system, but it keeps returning irrelevant chunks."Tutor: "Hint: What metric are you currently using to compare the user's query against your embedded database chunks, and how are those chunks being pre-processed?"📈 Educational ImpactThis platform is engineered to solve key issues in AI-assisted learning:ProblemTutor SolutionChatbots give away the answerSocratic alignment forces the AI to only provide leading questions/hints.Students get frustrated if it's too hardAdaptive prompting detects struggle and provides easier hints automatically.AI hallucinating fake conversationsThe Bouncer mechanism cleanly slices output before it reaches the UI.📞 AuthorAarchi SinghFull-Stack AI & Data EngineeringBuilt with Python, PyTorch, and FastAPI
